@@ -1,0 +1,131 @@
+# ==============================================================================
+# Root .gitignore for Resume Customizer (Full Stack: Next.js + FastAPI)
+# ==============================================================================
+
+# --------------------------------------------------
+# Environment variables & secrets (CRITICAL: Do NOT commit!)
+# --------------------------------------------------
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+*.pem
+*.key
+*.cert
+*.crt
+
+# Allow example / template environment files
+!.env.example
+!.env.*.example
+
+# --------------------------------------------------
+# Node.js & Next.js (Frontend)
+# --------------------------------------------------
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Next.js build outputs
+.next/
+out/
+build/
+dist/
+
+# TypeScript cache
+*.tsbuildinfo
+next-env.d.ts
+
+# Vercel & Turbopack
+.vercel/
+.turbo/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# --------------------------------------------------
+# Python & FastAPI (Backend)
+# --------------------------------------------------
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Databases & local storage
+*.sqlite3
+*.db
+
+# Temporary upload files
+uploads/
+tmp/
+temp/
+
+# --------------------------------------------------
+# Operating System & IDE Files
+# --------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+
+# IDEs
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-workspace
+*.sublime-project
