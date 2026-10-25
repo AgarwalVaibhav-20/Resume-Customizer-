@@ -7,8 +7,8 @@ from pydantic import ValidationError
 
 from app.core.config import settings
 from app.parsers.resume_parser import extract_resume_text
-from app.schemas.resume import ResumeCustomizationResponse
-from app.services.ai_service import customize_resume
+from app.schemas.resume import CoverLetterResponse, ResumeCustomizationResponse
+from app.services.ai_service import customize_resume, generate_cover_letter
 
 
 router = APIRouter(prefix="/api/v1")
@@ -20,33 +20,7 @@ MAX_JD_LENGTH = 20_000
 MAX_RESUME_TEXT_LENGTH = 40_000
 
 
-@router.get("/health")
-async def health_check():
-    return {"status": "ok", "service": "resume-customizer-api"}
-
-
-@router.post(
-    "/customize",
-    response_model=ResumeCustomizationResponse,
-)
-async def customize(
-    job_description: str = Form(...),
-    file: UploadFile = File(...),
-):
-    job_description = job_description.strip()
-
-    if len(job_description) < MIN_JD_LENGTH:
-        raise HTTPException(
-            status_code=422,
-            detail=f"Job description must contain at least {MIN_JD_LENGTH} characters.",
-        )
-
-    if len(job_description) > MAX_JD_LENGTH:
-        raise HTTPException(
-            status_code=422,
-            detail="Job description is too long.",
-        )
-
+async def _extract_uploaded_resume(file: UploadFile) -> str:
     filename = file.filename or ""
     extension = "." + filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
 
@@ -83,8 +57,52 @@ async def customize(
             detail="The extracted resume text is too long.",
         )
 
+    return resume_text
+
+
+@router.get("/health")
+async def health_check():
+    return {"status": "ok", "service": "resume-customizer-api"}
+
+
+@router.post(
+    "/customize",
+    response_model=ResumeCustomizationResponse,
+)
+async def customize(
+    job_description: str = Form(...),
+    file: UploadFile = File(...),
+    sections: str = Form(None),
+):
+    job_description = job_description.strip()
+
+    if len(job_description) < MIN_JD_LENGTH:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Job description must contain at least {MIN_JD_LENGTH} characters.",
+        )
+
+    if len(job_description) > MAX_JD_LENGTH:
+        raise HTTPException(
+            status_code=422,
+            detail="Job description is too long.",
+        )
+
+    resume_text = await _extract_uploaded_resume(file)
+    sections_list = (
+        [s.strip() for s in sections.split(",") if s.strip()]
+        if sections
+        else None
+    )
+
     try:
-        return await customize_resume(job_description, resume_text)
+        result = await customize_resume(
+            job_description,
+            resume_text,
+            sections_to_customize=sections_list,
+        )
+        result.original_text = resume_text
+        return result
     except ValidationError as exc:
         logger.exception("Invalid AI response schema")
         raise HTTPException(
@@ -96,4 +114,45 @@ async def customize(
         raise HTTPException(
             status_code=502,
             detail="Resume customization failed. Please try again later.",
+        ) from exc
+
+
+@router.post(
+    "/cover-letter",
+    response_model=CoverLetterResponse,
+)
+async def create_cover_letter(
+    job_description: str = Form(...),
+    file: UploadFile = File(...),
+    company_name: str = Form(None),
+    role_title: str = Form(None),
+):
+    job_description = job_description.strip()
+
+    if len(job_description) < MIN_JD_LENGTH:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Job description must contain at least {MIN_JD_LENGTH} characters.",
+        )
+
+    resume_text = await _extract_uploaded_resume(file)
+
+    try:
+        return await generate_cover_letter(
+            job_description=job_description,
+            resume_text=resume_text,
+            company_name=company_name.strip() if company_name else None,
+            role_title=role_title.strip() if role_title else None,
+        )
+    except ValidationError as exc:
+        logger.exception("Invalid AI response schema for cover letter")
+        raise HTTPException(
+            status_code=502,
+            detail="The cover letter response could not be validated. Please try again.",
+        ) from exc
+    except Exception as exc:
+        logger.exception("Cover letter generation failed")
+        raise HTTPException(
+            status_code=502,
+            detail="Cover letter generation failed. Please try again later.",
         ) from exc

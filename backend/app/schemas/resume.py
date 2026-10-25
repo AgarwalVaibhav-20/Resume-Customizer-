@@ -23,7 +23,21 @@ class ResumeCustomizationResponse(BaseModel):
     success: bool = True
     resume: TailoredResume
     match_score: int = Field(ge=0, le=100)
+    ats_score: int = Field(default=85, ge=0, le=100)
     matched_keywords: list[str] = Field(default_factory=list)
     missing_keywords: list[str] = Field(default_factory=list)
     suggestions: list[str] = Field(default_factory=list)
     changes_made: list[str] = Field(default_factory=list)
+    original_text: str = ""
+    customized_sections: list[str] = Field(default_factory=list)
+
+
+class CoverLetterResponse(BaseModel):
+    success: bool = True
+    recipient_title: str = "Hiring Manager"
+    company_name: str = ""
+    role_title: str = ""
+    salutation: str = "Dear Hiring Team,"
+    letter_body: str = ""
+    key_strengths_highlighted: list[str] = Field(default_factory=list)
+
